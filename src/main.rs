@@ -13,7 +13,6 @@ mod KrakenDriverUtils;
 
 fn main() {
     KrakenDriver::initialize();
-
-    let sexy_bunny_gif = read("./src/bunnyge.gif").unwrap();
-    KrakenController::setImage(sexy_bunny_gif);
+    let mai_gif = read("./img/maisan.gif").unwrap();
+    KrakenController::setImage(mai_gif);
 }
