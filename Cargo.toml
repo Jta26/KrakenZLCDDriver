@@ -1,5 +1,5 @@
 [package]
-name = "KrakenZLCDDriver"
+name = "kraken_z_lcd_driver"
 version = "0.1.0"
 edition = "2021"
 

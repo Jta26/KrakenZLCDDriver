@@ -3,14 +3,6 @@
 version = 3
 
 [[package]]
-name = "KrakenZLCDDriver"
-version = "0.1.0"
-dependencies = [
- "hex",
- "rusb",
-]
-
-[[package]]
 name = "cc"
 version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -21,6 +13,14 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
+name = "kraken_z_lcd_driver"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "rusb",
+]
 
 [[package]]
 name = "libc"
