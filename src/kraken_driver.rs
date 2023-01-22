@@ -1,21 +1,24 @@
 
 use rusb::{Context, UsbContext, Device, DeviceHandle};
 use std::time::Duration;
-use crate::usb_config::{configure_bulk_endpoint, find_writable_endpoints, Endpoint};
+use crate::usb_config::{configure_interrupt_endpoint, find_writable_endpoints, Endpoint};
 use crate::kraken_driver_utils;
 use hex::FromHex;
 
 const VID: u16 = 0x1e71;
 const PID: u16 = 0x3008;
 
-const WRITE_BULK_LENGTH: u32 = 512;
-const WRITE_LENGTH: u32 = 64;
+const WRITE_BULK_LENGTH: usize = 512;
+const WRITE_LENGTH: usize = 64;
+
+const SWITCH_ADDRESS: u8 = 0x38;
 
 pub struct KrakenDriver {
     handle: DeviceHandle<Context>,
     bulk_endpoint: Endpoint,
     interrupt_write_endpoint: Endpoint,
-    interrupt_read_endpoint: Endpoint
+    interrupt_read_endpoint: Endpoint,
+    image_index: u8
 }
 impl KrakenDriver {
     pub fn new() -> Self {
@@ -29,9 +32,9 @@ impl KrakenDriver {
         for endpoint in endpoints {
             if endpoint.address == 0x02 {
                 bulk_endpoint = Some(endpoint);
-            }else if endpoint.address == 0x81 {
+            }else if endpoint.address == 0x01 {
                 interrupt_write_endpoint = Some(endpoint);
-            } else if endpoint.address == 0x01 {
+            } else if endpoint.address == 0x81 {
                 interrupt_read_endpoint = Some(endpoint);
             }
             // Maybe we don't need on windows????
@@ -47,11 +50,14 @@ impl KrakenDriver {
         let bulk_endpoint = bulk_endpoint.unwrap();
         let interrupt_write_endpoint = interrupt_write_endpoint.unwrap();
         let interrupt_read_endpoint = interrupt_read_endpoint.unwrap();
+
+        let image_index = 1;
         KrakenDriver {
             handle,
             bulk_endpoint,
             interrupt_write_endpoint,
-            interrupt_read_endpoint
+            interrupt_read_endpoint,
+            image_index
         }
    
     }
@@ -81,6 +87,77 @@ impl KrakenDriver {
         }
     
         None
+    }
+
+    pub fn send_switch(&mut self, index: u8, mode: u8) {
+        let timeout = Duration::from_secs(2);
+        let endpoint = &self.interrupt_write_endpoint;
+        let handle = &mut self.handle;
+        configure_interrupt_endpoint(handle, endpoint);
+        let mut buffer: [u8; WRITE_LENGTH] = [0x0; WRITE_LENGTH];
+        
+        buffer[0] = SWITCH_ADDRESS;
+        buffer[1] = 0x1;
+        buffer[2] = mode;
+        buffer[3] = index;
+        let write_result = handle.write_interrupt(endpoint.address, &buffer, timeout);
+        match write_result {
+            Ok(r) => r,
+            Err(error) => panic!("error: {:?}", error)
+        };
+        let release_result = handle.release_interface(endpoint.iface);
+        match release_result {
+            Ok(r) => r,
+            Err(error) => panic!("Failed to Release Interface: {:?}", error)
+        };
+        ();
+    }
+    
+    pub fn send_query(&mut self, index: u8, asset: u8) {
+        let timeout = Duration::from_secs(2);
+        let endpoint = &self.interrupt_write_endpoint;
+        let handle = &mut self.handle;
+        configure_interrupt_endpoint(handle, endpoint);
+
+        let mut buffer: [u8; WRITE_LENGTH] = [0x0; WRITE_LENGTH];
+        buffer[0] = 0x30;
+        buffer[1] = 0x04;
+        buffer[3] = index;
+        buffer[5] = asset;
+        let write_result = handle.write_interrupt(endpoint.address, &buffer, timeout);
+        match write_result {
+            Ok(r) => r,
+            Err(error) => panic!("error: {:?}", error)
+        };
+        let release_result = handle.release_interface(endpoint.iface);
+        match release_result {
+            Ok(r) => r,
+            Err(error) => panic!("Failed to Release Interface: {:?}", error)
+        };
+        ();
+    }
+
+    pub fn send_delete(&mut self, index: u8) {
+        let timeout = Duration::from_secs(2);
+        let endpoint = &self.interrupt_write_endpoint;
+        let handle = &mut self.handle;
+        configure_interrupt_endpoint(handle, endpoint);
+
+        let mut buffer: [u8; WRITE_LENGTH] = [0x0; WRITE_LENGTH];
+        buffer[0] = 0x32;
+        buffer[1] = 0x2;
+        buffer[2] = index;
+        let write_result = handle.write_interrupt(endpoint.address, &buffer, timeout);
+        match write_result {
+            Ok(r) => r,
+            Err(error) => panic!("error: {:?}", error)
+        };
+        let release_result = handle.release_interface(endpoint.iface);
+        match release_result {
+            Ok(r) => r,
+            Err(error) => panic!("Failed to Release Interface: {:?}", error)
+        };
+        ();
     }
 
     pub fn send_bulk_out(&self, buffer: &[u8]) -> bool {

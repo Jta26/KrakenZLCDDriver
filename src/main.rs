@@ -15,4 +15,6 @@ fn main() {
     let mai_gif = read("./img/maisan.gif").unwrap();
     let controller = KrakenController::new();
     controller.set_image(mai_gif);
+    // controller.set_blank();
+
 }

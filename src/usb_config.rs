@@ -1,4 +1,4 @@
-use rusb::{UsbContext, Device, DeviceHandle};
+use rusb::{UsbContext, Device, DeviceHandle, Context};
 
 #[derive(Debug)]
 pub struct Endpoint {
@@ -38,8 +38,8 @@ pub fn find_writable_endpoints<T: UsbContext>(device: &mut Device<T>) -> Vec<End
     endpoints
 }
 
-pub fn configure_bulk_endpoint<T: UsbContext>(
-    handle: &mut DeviceHandle<T>,
+pub fn configure_bulk_endpoint(
+    handle: &mut DeviceHandle<Context>,
     endpoint: &Endpoint,
 ) {
     handle.set_active_configuration(endpoint.config).unwrap();
@@ -51,8 +51,8 @@ pub fn configure_bulk_endpoint<T: UsbContext>(
     handle.set_alternate_setting(endpoint.iface, endpoint.setting).unwrap();
 }
 
-pub fn configure_interrupt_endpoint<T: UsbContext>(
-    handle: &mut DeviceHandle<T>,
+pub fn configure_interrupt_endpoint(
+    handle: &mut DeviceHandle<Context>,
     endpoint: &Endpoint
 ) {
     handle.set_active_configuration(endpoint.config).unwrap();

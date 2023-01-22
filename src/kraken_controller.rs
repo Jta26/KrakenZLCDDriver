@@ -13,8 +13,14 @@ impl KrakenController {
             driver
         }
     }
-    pub fn set_image(&self, image: Vec<u8>) {
-        self.driver.send_bulk_out(&image);
+    pub fn set_image(mut self, image: Vec<u8>) {
+       self.driver.send_query(1, 0);
+       self.driver.send_delete(1);
+       
+    }
+
+    pub fn set_blank(mut self) {
+        self.driver.send_switch(0, 0);
     }
     
 }
